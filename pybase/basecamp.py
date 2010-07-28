@@ -59,6 +59,8 @@ url_mapping = {'get_projects':'/projects.xml', #projects
                #ToDo List Items
                'get_all_items':'/todo_lists/%d/todo_items.xml',
                'new_item':'/todo_lists/%d/todo_items/new.xml',
+               #Milestones
+               'get_all_milestones': '/projects/%d/milestones/list.xml',
                }
 
 class pythonic_objectify(object):
@@ -100,6 +102,11 @@ class pythonic_objectify(object):
                 elif kind == 'date':
                     year, month, day = value.split('-')
                     value = datetime.datetime(int(year),int(month),int(day))
+                elif kind == 'datetime':
+                    year, month, day = value.split('-')
+                    day, time = day.replace('Z', '').split('T')
+                    hours, minutes, seconds = time.split(':')
+                    value = datetime.datetime(int(year), int(month), int(day), int(hours), int(minutes), int(seconds))
                 
             #apply it to it's parent
             setattr(self._parent,tag,value)
@@ -152,6 +159,7 @@ class Basecamp(object):
         self.encoded_auth_string = self.encoded_auth_string.replace('\n', '')
         self.headers = [
             ('Content-Type', 'application/xml'),
+            ('User-Agent', 'PyBase/dev'),
             ('Accept', 'application/xml'),
             ('Authorization', 'Basic %s' % self.encoded_auth_string), ]
         
