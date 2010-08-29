@@ -1,7 +1,7 @@
 import logging
 import sys
 
-class MyStreamHandler(logging.Handler):
+class MyStreamHandler(logging.StreamHandler):
     def emit(self,record):
         sys.stdout.write('%s\n' % record.msg)
 
