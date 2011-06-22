@@ -9,8 +9,12 @@ import pdb
 import base64
 import urllib2
 import datetime
-from elementtree.ElementTree import fromstring, tostring
-import elementtree.ElementTree as ET
+try:
+  from xml.etree import ElementTree as ET
+  from xml.etree.ElementTree import fromstring, tostring
+except ImportError: #Prior to Python 2.5
+  from elementtree import ElementTree as ET
+  from elementtree.ElementTree import fromstring, tostring
 
 from config import *
 
@@ -179,15 +183,24 @@ class Basecamp(object):
         req.add_header('Content-Type', 'application/xml') 
         req.add_header('Accept', 'application/xml') 
         req.add_header('Authorization', 'Basic %s' % self.encoded_auth_string)
-        
         response = self.opener.open(req)
-        
+        # Possible catch
+        # response = ''
+        # try:
+        #     response = self.opener.open(req)
+        # except urllib2.HTTPError, e:
+        #     print e.code
+        #     print e.read
         return response
+        # self.opener.open(req)
+        # response = self.opener.open(req)
+        # print response
+        # return response
     
     def __getattr__(self,index):
         if index in url_mapping.keys():
             def temp_func(*args):
-                #print self._request(url_mapping[index] % args)
+                # print self._request(url_mapping[index] % args).read()
                 return pythonic_objectify(self._request(url_mapping[index] % args).read())
                 
             return temp_func
@@ -258,15 +271,43 @@ class Basecamp(object):
         
         #print self._request(path,req)
         #pdb.set_trace()
-
+        # print ET.tostring(req)
         response = self._request(path,req)
 
         if response.code == 201:
             return int(response.headers['location'].split('/')[-1])
+        elif response.code == 422:
+            return int(response.headers['location'].split('/')[-1])
         else: 
             return False
-        
-        #return self.old_create_todo_item(list_id,content,party_id,notify)
+
+
+    def create_milestone(self, project_id, title, due_date, party_id=None, notify=False):
+        path = '/projects/%d/milestones/create' % project_id
+        # Possible new endpoint. not sure.
+        # path = '/projects/%d/milestones.xml' % project_id
+
+        wrapper = ET.Element('request')
+
+        req = ET.SubElement(wrapper, 'milestone')
+        ET.SubElement(req, 'title').text = str(title)    
+        ET.SubElement(req, 'deadline', type='date').text = (due_date) #Also date time if in proper str format
+        party = ET.SubElement(req,'responsible_party')
+
+        notify_elem = ET.SubElement(req,'notify')
+        notify_elem.text = str(notify).lower()
+
+
+        if party_id is not None:
+            ET.SubElement(req, 'responsible-party').text = str(party_id)
+            ET.SubElement(req, 'notify').text = str(bool(notify)).lower()
+
+        ET.SubElement(req,'responsible-party').text = str(party_id).lower()
+        ET.SubElement(req,'notify').text = str(notify).lower()
+
+        response = self._request(path,wrapper)
+
+        return response
 
     def get_project_time(self,project_id,page=1,return_all=True):
         """This method will return all time entries, if you'd like it to return the last 50 set return_all to false and select the page."""

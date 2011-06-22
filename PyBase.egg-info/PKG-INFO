@@ -1,0 +1,11 @@
+Metadata-Version: 1.0
+Name: PyBase
+Version: 0.1
+Summary: A pythonic wrapper for the base camp RESTful API.
+Home-page: http://www.erdosmiller.com
+Author: Kenneth Miller
+Author-email: xkenneth@gmail.com
+License: UNKNOWN
+Description: UNKNOWN
+Keywords: basecamp wrapper api
+Platform: UNKNOWN
